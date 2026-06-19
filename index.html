@@ -638,11 +638,11 @@ const SD={};
 function initSearchableSelects(item){
   Object.values(SD).forEach(s=>s.destroy&&s.destroy());
   Object.keys(SD).forEach(k=>delete SD[k]);
-  SD['f-cat']   =new SearchableSelect('f-cat-wrap',   CATEGORIES,'categories',item.category||'', 'Search category…');
-  SD['f-size']  =new SearchableSelect('f-size-wrap',  SIZES,     'sizes',     item.size||'',     'Search size…');
-  SD['f-cond']  =new SearchableSelect('f-cond-wrap',  CONDITIONS,'conditions',item.condition||'','Search condition…');
-  SD['f-source']=new SearchableSelect('f-source-wrap',SOURCES,   'sources',   item.source||'',   'Search location…');
-  SD['f-brand'] =new SearchableSelect('f-brand-wrap', BRANDS,    'brands',    item.brand||'',    'Search or type brand…');
+  SD['f-cat-wrap']   =new SearchableSelect('f-cat-wrap',   CATEGORIES,'categories',item.category||'', 'Search category…');
+  SD['f-size-wrap']  =new SearchableSelect('f-size-wrap',  SIZES,     'sizes',     item.size||'',     'Search size…');
+  SD['f-cond-wrap']  =new SearchableSelect('f-cond-wrap',  CONDITIONS,'conditions',item.condition||'','Search condition…');
+  SD['f-source-wrap']=new SearchableSelect('f-source-wrap',SOURCES,   'sources',   item.source||'',   'Search location…');
+  SD['f-brand-wrap'] =new SearchableSelect('f-brand-wrap', BRANDS,    'brands',    item.brand||'',    'Search or type brand…');
 }
 
 // ── Editable dropdown helpers ─────────────────────────
@@ -785,13 +785,13 @@ async function saveItem(existingId){
     id:existingId||uid(),
     sku:document.getElementById('f-sku').value.trim(),
     name:document.getElementById('f-name').value.trim(),
-    brand:SD['f-brand']?.value||'',
+    brand:SD['f-brand-wrap']?.value||'',
     status:newStatus,
-    category:SD['f-cat']?.value||'',
-    size:SD['f-size']?.value||'',
-    condition:SD['f-cond']?.value||'',
+    category:SD['f-cat-wrap']?.value||'',
+    size:SD['f-size-wrap']?.value||'',
+    condition:SD['f-cond-wrap']?.value||'',
     color:document.getElementById('f-color').value.trim(),
-    source:SD['f-source']?.value||'',
+    source:SD['f-source-wrap']?.value||'',
     purchaseDate:document.getElementById('f-date').value,
     purchasePrice:document.getElementById('f-cost').value,
     listPrice:document.getElementById('f-list').value,
