@@ -173,9 +173,24 @@
 
 <script>
 const PLATFORMS=['eBay','Poshmark','Mercari','Facebook Marketplace','Depop','Etsy','Other'];
-const CATEGORIES=['Tops','Bottoms','Dresses','Outerwear','Shoes','Accessories','Bags','Jewelry','Kids','Home','Other'];
-const SIZES=['XS','S','M','L','XL','XXL','3XL','One size','0','2','4','6','8','10','12','14','16','18','20','US 9','0-3m','Other'];
-const CONDITIONS=['New with tags','Like new','Good','Fair','Poor'];
+
+// Editable lists — stored in localStorage
+function getList(key, defaults) {
+  try { const s = localStorage.getItem('ccc_list_'+key); return s ? JSON.parse(s) : defaults; } catch { return defaults; }
+}
+function saveList(key, arr) {
+  localStorage.setItem('ccc_list_'+key, JSON.stringify(arr));
+}
+
+const DEFAULT_CATEGORIES = ['Tops','Bottoms','Dresses','Outerwear','Shoes','Accessories','Bags','Jewelry','Kids','Home','Other'];
+const DEFAULT_SIZES = ['XS','S','M','L','XL','XXL','3XL','One size','0','2','4','6','8','10','12','14','16','18','20','US 9','0-3m','Other'];
+const DEFAULT_CONDITIONS = ['New with tags','New without tags','Like new','Good','Fair','Poor'];
+const DEFAULT_SOURCES = ['GW - Burleson','GW - Little Road','GW - Mansfield Cooper','GW - Mansfield Walnut Creek','Red, White, Blue','Salvation Army - Mansfield','Indy Clover','GW - Bins Ft. Worth'];
+
+function CATEGORIES() { return getList('categories', DEFAULT_CATEGORIES); }
+function SIZES()      { return getList('sizes',      DEFAULT_SIZES); }
+function CONDITIONS() { return getList('conditions', DEFAULT_CONDITIONS); }
+function SOURCES()    { return getList('sources',    DEFAULT_SOURCES); }
 
 // Shanon's Poshmark inventory — imported from @coxcreativeco
 const POSHMARK_SEED=[
@@ -516,6 +531,45 @@ function renderDashboard(){
 }
 
 // ── Modals ─────────────────────────────────────────────
+// ── Editable dropdown helpers ─────────────────────────
+function handleSelectChange(selectEl, listKey, listFn) {
+  if (selectEl.value !== '__add__') return;
+  const val = prompt('Enter new option:');
+  if (!val || !val.trim()) { selectEl.value = ''; return; }
+  const trimmed = val.trim();
+  const list = listFn();
+  if (!list.includes(trimmed)) {
+    list.push(trimmed);
+    saveList(listKey, list);
+  }
+  // Rebuild select options keeping selection
+  const prev = selectEl.getAttribute('data-prev') || '';
+  rebuildSelect(selectEl, list, trimmed);
+}
+
+function rebuildSelect(sel, options, selected) {
+  const addOpt = sel.querySelector('option[value="__add__"]');
+  // Remove all non-add options
+  [...sel.options].forEach(o => { if(o.value !== '__add__') o.remove(); });
+  options.forEach(opt => {
+    const o = document.createElement('option');
+    o.value = opt; o.textContent = opt;
+    if (opt === selected) o.selected = true;
+    sel.insertBefore(o, addOpt);
+  });
+  sel.value = selected;
+}
+
+function handleSourceChange(sel) {
+  if (sel.value !== '__add__') return;
+  const val = prompt('Enter new source location:');
+  if (!val || !val.trim()) { sel.value = ''; return; }
+  const trimmed = val.trim();
+  const list = SOURCES();
+  if (!list.includes(trimmed)) { list.push(trimmed); saveList('sources', list); }
+  rebuildSelect(sel, SOURCES(), trimmed);
+}
+
 function closeModal(){document.getElementById('modal-root').innerHTML='';}
 function openAddModal(){tempPhoto=null;showItemModal({status:'listed'},false);}
 function openEditModal(id){const item=items.find(i=>i.id===id);if(!item)return;tempPhoto=item.photo||null;showItemModal(item,true);}
@@ -552,9 +606,9 @@ function showItemModal(item,isEdit){
         <div class="field"><label>Item name</label><input id="f-name" value="${esc(item.name||'')}" placeholder="e.g. Vintage Levi's 501 jeans"></div>
         <div class="field"><label>Brand</label><input id="f-brand" value="${esc(item.brand||'')}" placeholder="e.g. Free People, Levi's"></div>
         <div class="field-row3">
-          <div class="field"><label>Category</label><select id="f-cat"><option value="">—</option>${CATEGORIES.map(c=>`<option ${item.category===c?'selected':''}>${c}</option>`).join('')}</select></div>
-          <div class="field"><label>Size</label><select id="f-size"><option value="">—</option>${SIZES.map(s=>`<option ${item.size===s?'selected':''}>${s}</option>`).join('')}</select></div>
-          <div class="field"><label>Condition</label><select id="f-cond"><option value="">—</option>${CONDITIONS.map(c=>`<option ${item.condition===c?'selected':''}>${c}</option>`).join('')}</select></div>
+          <div class="field"><label>Category</label><select id="f-cat" onchange="if(this.value==='__add__'){handleSelectChange(this,'categories',CATEGORIES)}"><option value="">—</option>${CATEGORIES().map(c=>`<option ${item.category===c?'selected':''}>${c}</option>`).join('')}<option value='__add__'>+ Add new…</option></select></div>
+          <div class="field"><label>Size</label><select id="f-size" onchange="if(this.value==='__add__'){handleSelectChange(this,'sizes',SIZES)}"><option value="">—</option>${SIZES().map(s=>`<option ${item.size===s?'selected':''}>${s}</option>`).join('')}<option value='__add__'>+ Add new…</option></select></div>
+          <div class="field"><label>Condition</label><select id="f-cond" onchange="if(this.value==='__add__'){handleSelectChange(this,'conditions',CONDITIONS)}"><option value="">—</option>${CONDITIONS().map(c=>`<option ${item.condition===c?'selected':''}>${c}</option>`).join('')}<option value='__add__'>+ Add new…</option></select></div>
         </div>
         <div class="field"><label>Color / description</label><input id="f-color" value="${esc(item.color||'')}" placeholder="e.g. Navy blue, floral print"></div>
         <div class="field"><label>Notes</label><textarea id="f-notes" placeholder="Measurements, flaws, storage location…">${esc(item.notes||'')}</textarea></div>
@@ -563,7 +617,12 @@ function showItemModal(item,isEdit){
       <div class="modal-section">
         <div class="modal-section-title">💰 Purchase info</div>
         <div class="field-row">
-          <div class="field"><label>Where purchased</label><input id="f-source" value="${esc(item.source||'')}" placeholder="e.g. Goodwill"></div>
+          <div class="field"><label>Where purchased</label><select id="f-source" onchange="handleSourceChange(this)">
+            <option value="">Select…</option>
+            ${SOURCES().map(s=>`<option ${item.source===s?'selected':''}>${s}</option>`).join('')}
+            ${item.source && !SOURCES().includes(item.source) ? `<option selected>${esc(item.source)}</option>` : ''}
+            <option value="__add__">+ Add new…</option>
+          </select></div>
           <div class="field"><label>Date purchased</label><input type="date" id="f-date" value="${esc(item.purchaseDate||'')}"></div>
         </div>
         <div class="field-row">
@@ -714,6 +773,18 @@ async function saveSale(id){
 }
 
 function openSettings(){
+  function listHTML(label, key, listFn) {
+    const items = listFn();
+    return `<div style="margin-bottom:16px">
+      <div style="font-size:12px;font-weight:700;color:var(--gray-400);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">${label}</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px">
+        ${items.map((v,i)=>`<span style="display:inline-flex;align-items:center;gap:4px;background:var(--gray-100);border-radius:20px;padding:4px 10px;font-size:13px">
+          ${esc(v)}<button onclick="removeListItem('${key}',${i},listFn_${key})" style="background:none;border:none;cursor:pointer;color:var(--gray-400);font-size:14px;line-height:1;padding:0 0 0 2px">×</button>
+        </span>`).join('')}
+      </div>
+      <button onclick="addListItem('${key}',listFn_${key})" style="font-size:13px;color:var(--green-text);background:none;border:none;cursor:pointer;padding:0">+ Add option</button>
+    </div>`;
+  }
   document.getElementById('modal-root').innerHTML=`
   <div class="modal-overlay" onclick="if(event.target===this)closeModal()">
   <div class="modal">
@@ -724,15 +795,39 @@ function openSettings(){
         <div class="modal-section-title">Google Sheet connection</div>
         <div class="field"><label>Web App URL</label><input id="set-url" value="${esc(WEB_APP_URL)}" placeholder="https://script.google.com/macros/s/…/exec"></div>
         <button class="btn-primary" onclick="updateUrl()">Save URL</button>
-      </div>
-      <div class="modal-section" style="margin-top:16px">
-        <div class="modal-section-title">Sync</div>
-        <p style="font-size:14px;color:var(--gray-600);margin-bottom:10px">Your Google Sheet is the master record. Tap below to reload all data from it.</p>
         <button class="btn-secondary" onclick="manualSync();closeModal()">🔄 Force sync from Sheet</button>
+      </div>
+      <div class="modal-section" style="margin-top:4px">
+        <div class="modal-section-title">Manage dropdown lists</div>
+        ${listHTML('Categories','categories',CATEGORIES)}
+        ${listHTML('Sizes','sizes',SIZES)}
+        ${listHTML('Conditions','conditions',CONDITIONS)}
+        ${listHTML('Where purchased','sources',SOURCES)}
       </div>
       <div style="height:8px"></div>
     </div>
   </div></div>`;
+}
+
+// Expose list functions for settings buttons
+const listFn_categories = CATEGORIES;
+const listFn_sizes = SIZES;
+const listFn_conditions = CONDITIONS;
+const listFn_sources = SOURCES;
+
+function removeListItem(key, idx, listFn) {
+  const list = listFn();
+  list.splice(idx, 1);
+  saveList(key, list);
+  openSettings();
+}
+function addListItem(key, listFn) {
+  const label = key === 'sources' ? 'Enter new source location:' : 'Enter new option:';
+  const val = prompt(label);
+  if (!val || !val.trim()) return;
+  const list = listFn();
+  if (!list.includes(val.trim())) { list.push(val.trim()); saveList(key, list); }
+  openSettings();
 }
 
 function updateUrl(){
