@@ -44,8 +44,14 @@
   .chip.active{background:var(--gray-900);color:#fff;border-color:var(--gray-900)}
   .search-box{width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:15px;background:#fff;color:var(--gray-900);margin-bottom:10px;outline:none}
   .search-box:focus{border-color:var(--green)}
-  .item-card{background:#fff;border:1px solid var(--border);border-radius:var(--radius);margin-bottom:10px;overflow:hidden;cursor:pointer;display:flex;align-items:stretch}
+  .item-card{background:#fff;border:1px solid var(--border);border-radius:var(--radius);margin-bottom:10px;overflow:hidden;cursor:pointer;display:flex;align-items:stretch;transition:background .3s}
   .item-card:active{border-color:var(--green)}
+  .item-card.age-yellow{background:#FFFBEA;border-color:#F0D060}
+  .item-card.age-orange{background:#FFF0D0;border-color:#E8A020}
+  .item-card.age-red-light{background:#FFE4D0;border-color:#D96020}
+  .item-card.age-red{background:#FFD0C0;border-color:#C03010}
+  .item-card.age-red-dark{background:#FFBCAA;border-color:#A02000}
+  .item-card .item-name,.item-card .item-sku,.item-card .item-meta,.item-card .item-list-price,.item-card .item-cost{color:var(--gray-900)!important}
   .item-thumb{width:80px;min-height:80px;background:var(--gray-100);flex-shrink:0;overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:28px;color:var(--gray-200)}
   .item-thumb img{width:100%;height:100%;object-fit:cover}
   .item-body{flex:1;padding:12px;min-width:0}
@@ -120,6 +126,17 @@
   .btn-sold{width:100%;padding:13px;background:var(--green-light);color:var(--green-dark);border:1px solid #9FE1CB;border-radius:var(--radius-sm);font-size:15px;font-weight:600;cursor:pointer;margin-top:8px}
   .profit-positive{color:var(--green-dark);font-weight:600}
   .profit-negative{color:var(--red);font-weight:600}
+
+  /* ── Searchable dropdown ── */
+  .sd-wrap{position:relative;width:100%}
+  .sd-input{width:100%;padding:11px 13px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:16px;font-family:var(--font);background:#fff;color:var(--gray-900);outline:none;cursor:pointer}
+  .sd-input:focus{border-color:var(--green)}
+  .sd-list{position:absolute;top:calc(100% + 4px);left:0;right:0;background:#fff;border:1px solid var(--border);border-radius:var(--radius-sm);max-height:220px;overflow-y:auto;z-index:500;box-shadow:0 4px 16px rgba(0,0,0,.1);display:none}
+  .sd-list.open{display:block}
+  .sd-item{padding:10px 13px;font-size:15px;cursor:pointer;color:var(--gray-900)}
+  .sd-item:hover,.sd-item.focused{background:var(--green-light);color:var(--green-dark)}
+  .sd-item.add-new{color:var(--green-text);font-weight:600;border-top:1px solid var(--border)}
+  .sd-empty{padding:10px 13px;font-size:14px;color:var(--gray-400);font-style:italic}
   .spinner{display:inline-block;width:14px;height:14px;border:2px solid currentColor;border-top-color:transparent;border-radius:50%;animation:spin .6s linear infinite;vertical-align:middle;margin-right:6px}
   @keyframes spin{to{transform:rotate(360deg)}}
   .seed-notice{background:var(--green-light);border:1px solid #9FE1CB;border-radius:var(--radius-sm);padding:12px 14px;font-size:13px;color:var(--green-dark);margin-bottom:14px;line-height:1.5}
@@ -186,47 +203,56 @@ const DEFAULT_CATEGORIES = ['Tops','Bottoms','Dresses','Outerwear','Shoes','Acce
 const DEFAULT_SIZES = ['XS','S','M','L','XL','XXL','3XL','One size','0','2','4','6','8','10','12','14','16','18','20','US 9','0-3m','Other'];
 const DEFAULT_CONDITIONS = ['New with tags','New without tags','Like new','Good','Fair','Poor'];
 const DEFAULT_SOURCES = ['GW - Burleson','GW - Little Road','GW - Mansfield Cooper','GW - Mansfield Walnut Creek','Red, White, Blue','Salvation Army - Mansfield','Indy Clover','GW - Bins Ft. Worth'];
+const DEFAULT_BRANDS = [
+  'American Eagle Outfitters','Bad Birdie','Brunello Cucinelli','Carters',
+  'Chubbies','Dokotoo','Entro','Free People','Hart Schaffner Marx',
+  'Hybrid and Company','J. Crew','Jelly Pop','Kuhl','Maya Brenner',
+  'Michael Kors','Pashmina','Pleione','Prana','Roffe','Rose and Olive',
+  'See You Monday','Southern Tide','Tommy Hilfiger','Vera Bradley','Wayre',
+  'White House Black Market','Woman Within','Wonderly'
+];
 
 function CATEGORIES() { return getList('categories', DEFAULT_CATEGORIES); }
 function SIZES()      { return getList('sizes',      DEFAULT_SIZES); }
 function CONDITIONS() { return getList('conditions', DEFAULT_CONDITIONS); }
 function SOURCES()    { return getList('sources',    DEFAULT_SOURCES); }
+function BRANDS()     { return getList('brands',     DEFAULT_BRANDS); }
 
 // Shanon's Poshmark inventory — imported from @coxcreativeco
 const POSHMARK_SEED=[
-  {name:"NWOT 100% Genuine Leather Pink Pebbled Wallet — Red Leather Interior",brand:"None",category:"Accessories",size:"One size",condition:"New with tags",listPrice:"12",poshUrl:"https://poshmark.com/listing/NWOT-100-Genuine-Leather-Made-in-Italy-Pink-pebbled-leather-Red-leather-inner-6a33cef2963c42248fe5e25c"},
-  {name:"American Eagle Mens Y2K Plaid Flannel Hoodie Shirt — Gray/Black/White XL",brand:"American Eagle Outfitters",category:"Tops",size:"XL",condition:"Good",listPrice:"22",poshUrl:"https://poshmark.com/listing/American-Eagle-Mens-Y2K-Plaid-Flannel-Hoodie-Shirt-Gray-Black-White-Plaid-XL-6a225a2834d1565e6c7578e8"},
-  {name:"NWT Michael Kors Jet Set Travel Cherry Crossbody Leather Bag",brand:"Michael Kors",category:"Bags",size:"One size",condition:"New with tags",listPrice:"108",poshUrl:"https://poshmark.com/listing/NWT-Michael-Kors-Jet-Set-Travel-Cherry-MD-NS-Chain-Crossbody-Leather-bag-69f15040f8ede7a6d4e90410"},
-  {name:"Brunello Cucinelli Cashmere Silk Metallic Knit Tank Top — Black M Made in Italy",brand:"Brunello Cucinelli",category:"Tops",size:"M",condition:"Like new",listPrice:"224",poshUrl:"https://poshmark.com/listing/Brunello-Cucinelli-Cashmere-Silk-Metallic-Knit-Tank-Top-Blck-Med-Made-in-Italy-6a2f8838a6bb768f83a2fa66"},
-  {name:"Rose and Olive Tropical Palm Tree Bird Print Button-Up Shirt — Size L",brand:"Rose and Olive",category:"Tops",size:"L",condition:"Good",listPrice:"14",poshUrl:"https://poshmark.com/listing/Rose-Olive-Tropical-Palm-Tree-Bird-Print-Button-Up-Shirt-Womens-Size-L-6a264c64b9bd745979a02d89"},
-  {name:"NWT Prana Foothills Flat Brim Hat Morro UPF 50+",brand:"Prana",category:"Accessories",size:"One size",condition:"New with tags",listPrice:"15",poshUrl:"https://poshmark.com/listing/NWT-Prana-Foothills-Flat-Brim-hat-Morro-with-UPF-50-69f745fdaf7f47678dbe1c1f"},
-  {name:"Luxury Deep Red Pashmina Scarf — 70% Pashmina 30% Silk Tassel Fringe",brand:"Pashmina",category:"Accessories",size:"One size",condition:"Like new",listPrice:"15",poshUrl:"https://poshmark.com/listing/Luxury-Deep-Red-Pashmina-Scarf-70-Pashmina-30-Silk-Tassel-Fringe-Elegant-Wrap-6a1bc396fbae957558f276c0"},
-  {name:"Kuhl Mens Short Sleeve Plaid Button Down Shirt — Blue/Gray XL",brand:"Kuhl",category:"Tops",size:"XL",condition:"Good",listPrice:"22",poshUrl:"https://poshmark.com/listing/Khl-Mens-XL-Short-Sleeve-Plaid-Button-Down-Shirt-Blue-Gray-Born-in-the-Mountain-6a30dcf0cf0577fc7382c8dc"},
-  {name:"Mens Black Genuine Leather Belt Size 50 — Antiqued Silver Buckle",brand:"None",category:"Accessories",size:"One size",condition:"Good",listPrice:"10",poshUrl:"https://poshmark.com/listing/Mens-Black-Genuine-Leather-Belt-Size-50-Antiqued-Silver-Buckle-797-6a0cdc3eef1ef7ffbcb859b4"},
-  {name:"NWT Wonderly Beige Collared Top — Quarter Zip with Drawstring Waist",brand:"Wonderly",category:"Tops",size:"L",condition:"New with tags",listPrice:"6",poshUrl:"https://poshmark.com/listing/NWT-Wonderly-Beige-Collared-Top-with-a-14-zip-and-drawstring-waist-6a1286d180cb654861746b82"},
-  {name:"Pleione Gray Marble Print Long Sleeve Blouse — Size M",brand:"Pleione",category:"Tops",size:"M",condition:"Good",listPrice:"10",poshUrl:"https://poshmark.com/listing/Pleione-Gray-Marble-Print-Long-Sleeve-Blouse-Size-M-6a2e364bf51a0f7a6a261c28"},
-  {name:"Jelly Pop Comfort Fit Slip-On Sneakers — Leopard Dalmatian Print Size 9",brand:"Jelly Pop",category:"Shoes",size:"US 9",condition:"Good",listPrice:"14",poshUrl:"https://poshmark.com/listing/Jelly-Pop-comfort-fit-Womens-Slip-On-Sneakers-Leopard-Dalmatian-Print-Size-9-6a2a4243694d72308bfc9d26"},
-  {name:"Bad Birdie Mens Blue Floral Performance Golf Polo Shirt — Large",brand:"Bad Birdie",category:"Tops",size:"L",condition:"Like new",listPrice:"32",poshUrl:"https://poshmark.com/listing/Bad-Birdie-Mens-Blue-Floral-Performance-Golf-Polo-Shirt-Large-Short-Sleeve-L-6a2ce69a13d68196b027756f"},
-  {name:"Maya Brenner LOVE Necklace Gold-Plated NWT — Asymmetrical Letter with Pouch",brand:"Maya Brenner",category:"Jewelry",size:"One size",condition:"New with tags",listPrice:"45",poshUrl:"https://poshmark.com/listing/Maya-Brenner-LOVE-Necklace-GoldPlated-NWT-w-Pouch-Asymmetrical-Letter-6a28f5babbfbea6c8d91113d"},
-  {name:"Carved Wooden Cross Rustic Home Decor — India",brand:"None",category:"Home",size:"One size",condition:"Good",listPrice:"9",poshUrl:"https://poshmark.com/listing/Carved-Wooden-Cross-Rustic-Home-Decor-India-6a1eac8aa6bb76cde8574ea8"},
-  {name:"Bad Birdie Mens XL Golf Polo Shirt — Geometric Abstract Print Retro",brand:"Bad Birdie",category:"Tops",size:"XL",condition:"Like new",listPrice:"24",poshUrl:"https://poshmark.com/listing/Bad-Birdie-Mens-XL-Golf-Polo-Shirt-Geometric-Abstract-Print-Short-Sleeve-Retro-69f3b5bfa5bb34d576e1349e"},
-  {name:"Free People Chive Army Green Corduroy Straight Leg Pants — Size 2 NEW",brand:"Free People",category:"Bottoms",size:"2",condition:"New with tags",listPrice:"30",poshUrl:"https://poshmark.com/listing/Free-People-Chive-Army-Green-Corduroy-Straight-Leg-Pants-OB2054758-Size-2-NEW-6a2b92e05bb1ee4cfec58fee"},
-  {name:"Wayre Pleated Travel Shorts — Black High Rise Zip Pockets Size S Recycled Fabric",brand:"Wayre",category:"Bottoms",size:"S",condition:"Like new",listPrice:"39",poshUrl:"https://poshmark.com/listing/Wayre-Pleated-Travel-Shorts-Black-High-Rise-Zip-Pockets-Size-S-Recycled-Fabric-69c1139c0841b9540d29a438"},
-  {name:"NWT Entro Snakeskin Print Tie-Front Blouse with Bell Sleeves",brand:"Entro",category:"Tops",size:"L",condition:"New with tags",listPrice:"7",poshUrl:"https://poshmark.com/listing/NWT-entro-Snakeskin-Print-TieFront-Blouse-with-Bell-Sleeves-Light-and-flowy-6a23aa46dff1f1d1995dad51"},
-  {name:"Southern Tide Skipjack Polo Shirt Mens XXXL — Orange Pima Cotton Classic Fit",brand:"Southern Tide",category:"Tops",size:"3XL",condition:"Good",listPrice:"17",poshUrl:"https://poshmark.com/listing/Southern-Tide-Skipjack-Polo-Shirt-Mens-XXXL-Orange-Pima-Cotton-Classic-Fit-15301-6a34d9b4e34c308566314608"},
-  {name:"Carters Pink Fleece Sleep Sack 0-3 Months — Bunny Hearts",brand:"Carters",category:"Kids",size:"0-3m",condition:"Good",listPrice:"6",poshUrl:"https://poshmark.com/listing/Carters-Pink-Fleece-Sleep-Sack-0-3-Months-Bunny-Hearts-Sleep-Sack-6a1fb64418d1c27ecf2c895a"},
-  {name:"White House Black Market Off-Shoulder Black Blouse — Like New",brand:"White House Black Market",category:"Tops",size:"L",condition:"Like new",listPrice:"20",poshUrl:"https://poshmark.com/listing/White-House-Black-Market-OffShoulder-Black-Blouse-Like-New-69f5e942bc6e1c71e2826448"},
-  {name:"See You Monday Black Wide Leg Jumpsuit — Spaghetti Strap Pockets Size L",brand:"See You Monday",category:"Dresses",size:"L",condition:"Good",listPrice:"51",poshUrl:"https://poshmark.com/listing/See-You-Monday-Black-Wide-Leg-Jumpsuit-Womens-Large-Spaghetti-Strap-Pockets-SZ-L-69f525f1d6c0dcc7aa099e31"},
-  {name:"J. Crew Mens Lightweight Plaid Button Down Shirt — XL Pink/Navy",brand:"J. Crew",category:"Tops",size:"XL",condition:"Like new",listPrice:"22",poshUrl:"https://poshmark.com/listing/J-Crew-Mens-Light-Weight-Plaid-Button-Down-Shirt-EUC-X-Large-Pink-Navy-6a21084232b786fd6d1b6902"},
-  {name:"Woman Within Black Velour Crew Neck Long Sleeve Top — Plus Size 18/20",brand:"Woman Within",category:"Tops",size:"18",condition:"Good",listPrice:"12",poshUrl:"https://poshmark.com/listing/Woman-Within-Black-Velour-Crew-Neck-Long-Sleeve-Top-Plus-Size-L-1820-6a1d149104b36df50f44182b"},
-  {name:"Hart Schaffner Marx Mens XL Plaid Button Down Shirt — Long Sleeve White/Blue/Tan",brand:"Hart Schaffner Marx",category:"Tops",size:"XL",condition:"Good",listPrice:"9",poshUrl:"https://poshmark.com/listing/Hart-Schaffner-Marx-Mens-XL-Plaid-Button-Down-Shirt-Long-Sleeve-White-Blue-Tan-6a279ec8e2ac0caea93e95ed"},
-  {name:"NWT Take Me Gnome Tonight Ugly Christmas Sweater — Green Size L",brand:"None",category:"Tops",size:"L",condition:"New with tags",listPrice:"23",poshUrl:"https://poshmark.com/listing/NWT-Take-Me-Gnome-Tonight-Ugly-Christmas-Sweater-Gnome-Beer-Funny-Holiday-Green-69f9d70b49d8d8fc31749be9"},
-  {name:"Vera Bradley Insulated Cooler Tote Bag — Retired Pattern Limes Up 2011-12",brand:"Vera Bradley",category:"Bags",size:"One size",condition:"Good",listPrice:"16",poshUrl:"https://poshmark.com/listing/Vera-Bradley-Insulated-Cooler-Tote-Bag-in-the-RETIRED-PATTERN-Limes-Up-201112-69e5fc9934e984f479d37f27"},
-  {name:"NWOT Navy White Striped Canvas Tote Bag — Blank for Monogram Preppy Beach Bag",brand:"None",category:"Bags",size:"One size",condition:"New with tags",listPrice:"9",poshUrl:"https://poshmark.com/listing/NWOT-Navy-White-Striped-Tote-Bag-Blank-for-Monogram-Preppy-Canvas-Beach-Bag-6a1ba4406d655d2464c4bacb"},
-  {name:"Tommy Hilfiger Mens XL Short Sleeve Floral Camo Button Down Shirt",brand:"Tommy Hilfiger",category:"Tops",size:"XL",condition:"Good",listPrice:"18",poshUrl:"https://poshmark.com/listing/Tommy-Hilfiger-Mens-XL-Custom-Fit-Short-Sleeve-Floral-Camo-Button-Down-Shirt-69f3be13a7e26010ea1258b7"},
-  {name:"Vintage Roffe Skiwear Blue Padded Bib Snow Pants — Womens Size 12",brand:"Roffe",category:"Bottoms",size:"12",condition:"Good",listPrice:"38",poshUrl:"https://poshmark.com/listing/Vintage-Roffe-Skiwear-Blue-Padded-Bib-Snow-Pants-Womens-12-Regular-6a113a9d8b24d3d37b607f08"},
-  {name:"DOKOTOO Womens White V-Neck Twisted Front Mesh Sleeve Top — Size L",brand:"Dokotoo",category:"Tops",size:"L",condition:"Good",listPrice:"26",poshUrl:"https://poshmark.com/listing/DOKOTOO-Womens-White-V-Neck-Twisted-Front-Mesh-Sleeve-Top-Blouse-Shirt-L-69ff20dc34d1563a7317dc8f"},
-  {name:"Chubbies Mens Domingos Are For Flamingos 7in Swim Trunks 2-in-1 Liner 3XL NEW",brand:"Chubbies",category:"Bottoms",size:"3XL",condition:"New with tags",listPrice:"36",poshUrl:"https://poshmark.com/listing/Chubbies-Mens-The-Domingos-Are-For-Flamingos-7-Swim-Trunks-2in1-Liner-3XL-NEW-6a323710bbfbea944d063c08"},
+  {name:"NWOT 100% Genuine Leather Pink Pebbled Wallet — Red Leather Interior",brand:"None",category:"Accessories",size:"One size",condition:"New with tags",listPrice:"12",poshUrl:"https://poshmark.com/listing/NWOT-100-Genuine-Leather-Made-in-Italy-Pink-pebbled-leather-Red-leather-inner-6a33cef2963c42248fe5e25c",listDate:"2026-06-18"},
+  {name:"American Eagle Mens Y2K Plaid Flannel Hoodie Shirt — Gray/Black/White XL",brand:"American Eagle Outfitters",category:"Tops",size:"XL",condition:"Good",listPrice:"22",poshUrl:"https://poshmark.com/listing/American-Eagle-Mens-Y2K-Plaid-Flannel-Hoodie-Shirt-Gray-Black-White-Plaid-XL-6a225a2834d1565e6c7578e8",listDate:"2026-06-05"},
+  {name:"NWT Michael Kors Jet Set Travel Cherry Crossbody Leather Bag",brand:"Michael Kors",category:"Bags",size:"One size",condition:"New with tags",listPrice:"108",poshUrl:"https://poshmark.com/listing/NWT-Michael-Kors-Jet-Set-Travel-Cherry-MD-NS-Chain-Crossbody-Leather-bag-69f15040f8ede7a6d4e90410",listDate:"2026-04-29"},
+  {name:"Brunello Cucinelli Cashmere Silk Metallic Knit Tank Top — Black M Made in Italy",brand:"Brunello Cucinelli",category:"Tops",size:"M",condition:"Like new",listPrice:"224",poshUrl:"https://poshmark.com/listing/Brunello-Cucinelli-Cashmere-Silk-Metallic-Knit-Tank-Top-Blck-Med-Made-in-Italy-6a2f8838a6bb768f83a2fa66",listDate:"2026-06-15"},
+  {name:"Rose and Olive Tropical Palm Tree Bird Print Button-Up Shirt — Size L",brand:"Rose and Olive",category:"Tops",size:"L",condition:"Good",listPrice:"14",poshUrl:"https://poshmark.com/listing/Rose-Olive-Tropical-Palm-Tree-Bird-Print-Button-Up-Shirt-Womens-Size-L-6a264c64b9bd745979a02d89",listDate:"2026-06-08"},
+  {name:"NWT Prana Foothills Flat Brim Hat Morro UPF 50+",brand:"Prana",category:"Accessories",size:"One size",condition:"New with tags",listPrice:"15",poshUrl:"https://poshmark.com/listing/NWT-Prana-Foothills-Flat-Brim-hat-Morro-with-UPF-50-69f745fdaf7f47678dbe1c1f",listDate:"2026-05-03"},
+  {name:"Luxury Deep Red Pashmina Scarf — 70% Pashmina 30% Silk Tassel Fringe",brand:"Pashmina",category:"Accessories",size:"One size",condition:"Like new",listPrice:"15",poshUrl:"https://poshmark.com/listing/Luxury-Deep-Red-Pashmina-Scarf-70-Pashmina-30-Silk-Tassel-Fringe-Elegant-Wrap-6a1bc396fbae957558f276c0",listDate:"2026-05-31"},
+  {name:"Kuhl Mens Short Sleeve Plaid Button Down Shirt — Blue/Gray XL",brand:"Kuhl",category:"Tops",size:"XL",condition:"Good",listPrice:"22",poshUrl:"https://poshmark.com/listing/Khl-Mens-XL-Short-Sleeve-Plaid-Button-Down-Shirt-Blue-Gray-Born-in-the-Mountain-6a30dcf0cf0577fc7382c8dc",listDate:"2026-06-16"},
+  {name:"Mens Black Genuine Leather Belt Size 50 — Antiqued Silver Buckle",brand:"None",category:"Accessories",size:"One size",condition:"Good",listPrice:"10",poshUrl:"https://poshmark.com/listing/Mens-Black-Genuine-Leather-Belt-Size-50-Antiqued-Silver-Buckle-797-6a0cdc3eef1ef7ffbcb859b4",listDate:"2026-05-19"},
+  {name:"NWT Wonderly Beige Collared Top — Quarter Zip with Drawstring Waist",brand:"Wonderly",category:"Tops",size:"L",condition:"New with tags",listPrice:"6",poshUrl:"https://poshmark.com/listing/NWT-Wonderly-Beige-Collared-Top-with-a-14-zip-and-drawstring-waist-6a1286d180cb654861746b82",listDate:"2026-05-24"},
+  {name:"Pleione Gray Marble Print Long Sleeve Blouse — Size M",brand:"Pleione",category:"Tops",size:"M",condition:"Good",listPrice:"10",poshUrl:"https://poshmark.com/listing/Pleione-Gray-Marble-Print-Long-Sleeve-Blouse-Size-M-6a2e364bf51a0f7a6a261c28",listDate:"2026-06-14"},
+  {name:"Jelly Pop Comfort Fit Slip-On Sneakers — Leopard Dalmatian Print Size 9",brand:"Jelly Pop",category:"Shoes",size:"US 9",condition:"Good",listPrice:"14",poshUrl:"https://poshmark.com/listing/Jelly-Pop-comfort-fit-Womens-Slip-On-Sneakers-Leopard-Dalmatian-Print-Size-9-6a2a4243694d72308bfc9d26",listDate:"2026-06-11"},
+  {name:"Bad Birdie Mens Blue Floral Performance Golf Polo Shirt — Large",brand:"Bad Birdie",category:"Tops",size:"L",condition:"Like new",listPrice:"32",poshUrl:"https://poshmark.com/listing/Bad-Birdie-Mens-Blue-Floral-Performance-Golf-Polo-Shirt-Large-Short-Sleeve-L-6a2ce69a13d68196b027756f",listDate:"2026-06-13"},
+  {name:"Maya Brenner LOVE Necklace Gold-Plated NWT — Asymmetrical Letter with Pouch",brand:"Maya Brenner",category:"Jewelry",size:"One size",condition:"New with tags",listPrice:"45",poshUrl:"https://poshmark.com/listing/Maya-Brenner-LOVE-Necklace-GoldPlated-NWT-w-Pouch-Asymmetrical-Letter-6a28f5babbfbea6c8d91113d",listDate:"2026-06-10"},
+  {name:"Carved Wooden Cross Rustic Home Decor — India",brand:"None",category:"Home",size:"One size",condition:"Good",listPrice:"9",poshUrl:"https://poshmark.com/listing/Carved-Wooden-Cross-Rustic-Home-Decor-India-6a1eac8aa6bb76cde8574ea8",listDate:"2026-06-02"},
+  {name:"Bad Birdie Mens XL Golf Polo Shirt — Geometric Abstract Print Retro",brand:"Bad Birdie",category:"Tops",size:"XL",condition:"Like new",listPrice:"24",poshUrl:"https://poshmark.com/listing/Bad-Birdie-Mens-XL-Golf-Polo-Shirt-Geometric-Abstract-Print-Short-Sleeve-Retro-69f3b5bfa5bb34d576e1349e",listDate:"2026-04-30"},
+  {name:"Free People Chive Army Green Corduroy Straight Leg Pants — Size 2 NEW",brand:"Free People",category:"Bottoms",size:"2",condition:"New with tags",listPrice:"30",poshUrl:"https://poshmark.com/listing/Free-People-Chive-Army-Green-Corduroy-Straight-Leg-Pants-OB2054758-Size-2-NEW-6a2b92e05bb1ee4cfec58fee",listDate:"2026-06-12"},
+  {name:"Wayre Pleated Travel Shorts — Black High Rise Zip Pockets Size S Recycled Fabric",brand:"Wayre",category:"Bottoms",size:"S",condition:"Like new",listPrice:"39",poshUrl:"https://poshmark.com/listing/Wayre-Pleated-Travel-Shorts-Black-High-Rise-Zip-Pockets-Size-S-Recycled-Fabric-69c1139c0841b9540d29a438",listDate:"2026-03-23"},
+  {name:"NWT Entro Snakeskin Print Tie-Front Blouse with Bell Sleeves",brand:"Entro",category:"Tops",size:"L",condition:"New with tags",listPrice:"7",poshUrl:"https://poshmark.com/listing/NWT-entro-Snakeskin-Print-TieFront-Blouse-with-Bell-Sleeves-Light-and-flowy-6a23aa46dff1f1d1995dad51",listDate:"2026-06-06"},
+  {name:"Southern Tide Skipjack Polo Shirt Mens XXXL — Orange Pima Cotton Classic Fit",brand:"Southern Tide",category:"Tops",size:"3XL",condition:"Good",listPrice:"17",poshUrl:"https://poshmark.com/listing/Southern-Tide-Skipjack-Polo-Shirt-Mens-XXXL-Orange-Pima-Cotton-Classic-Fit-15301-6a34d9b4e34c308566314608",listDate:"2026-06-19"},
+  {name:"Carters Pink Fleece Sleep Sack 0-3 Months — Bunny Hearts",brand:"Carters",category:"Kids",size:"0-3m",condition:"Good",listPrice:"6",poshUrl:"https://poshmark.com/listing/Carters-Pink-Fleece-Sleep-Sack-0-3-Months-Bunny-Hearts-Sleep-Sack-6a1fb64418d1c27ecf2c895a",listDate:"2026-06-03"},
+  {name:"White House Black Market Off-Shoulder Black Blouse — Like New",brand:"White House Black Market",category:"Tops",size:"L",condition:"Like new",listPrice:"20",poshUrl:"https://poshmark.com/listing/White-House-Black-Market-OffShoulder-Black-Blouse-Like-New-69f5e942bc6e1c71e2826448",listDate:"2026-05-02"},
+  {name:"See You Monday Black Wide Leg Jumpsuit — Spaghetti Strap Pockets Size L",brand:"See You Monday",category:"Dresses",size:"L",condition:"Good",listPrice:"51",poshUrl:"https://poshmark.com/listing/See-You-Monday-Black-Wide-Leg-Jumpsuit-Womens-Large-Spaghetti-Strap-Pockets-SZ-L-69f525f1d6c0dcc7aa099e31",listDate:"2026-05-01"},
+  {name:"J. Crew Mens Lightweight Plaid Button Down Shirt — XL Pink/Navy",brand:"J. Crew",category:"Tops",size:"XL",condition:"Like new",listPrice:"22",poshUrl:"https://poshmark.com/listing/J-Crew-Mens-Light-Weight-Plaid-Button-Down-Shirt-EUC-X-Large-Pink-Navy-6a21084232b786fd6d1b6902",listDate:"2026-06-04"},
+  {name:"Woman Within Black Velour Crew Neck Long Sleeve Top — Plus Size 18/20",brand:"Woman Within",category:"Tops",size:"18",condition:"Good",listPrice:"12",poshUrl:"https://poshmark.com/listing/Woman-Within-Black-Velour-Crew-Neck-Long-Sleeve-Top-Plus-Size-L-1820-6a1d149104b36df50f44182b",listDate:"2026-06-01"},
+  {name:"Hart Schaffner Marx Mens XL Plaid Button Down Shirt — Long Sleeve White/Blue/Tan",brand:"Hart Schaffner Marx",category:"Tops",size:"XL",condition:"Good",listPrice:"9",poshUrl:"https://poshmark.com/listing/Hart-Schaffner-Marx-Mens-XL-Plaid-Button-Down-Shirt-Long-Sleeve-White-Blue-Tan-6a279ec8e2ac0caea93e95ed",listDate:"2026-06-09"},
+  {name:"NWT Take Me Gnome Tonight Ugly Christmas Sweater — Green Size L",brand:"None",category:"Tops",size:"L",condition:"New with tags",listPrice:"23",poshUrl:"https://poshmark.com/listing/NWT-Take-Me-Gnome-Tonight-Ugly-Christmas-Sweater-Gnome-Beer-Funny-Holiday-Green-69f9d70b49d8d8fc31749be9",listDate:"2026-05-05"},
+  {name:"Vera Bradley Insulated Cooler Tote Bag — Retired Pattern Limes Up 2011-12",brand:"Vera Bradley",category:"Bags",size:"One size",condition:"Good",listPrice:"16",poshUrl:"https://poshmark.com/listing/Vera-Bradley-Insulated-Cooler-Tote-Bag-in-the-RETIRED-PATTERN-Limes-Up-201112-69e5fc9934e984f479d37f27",listDate:"2026-04-20"},
+  {name:"NWOT Navy White Striped Canvas Tote Bag — Blank for Monogram Preppy Beach Bag",brand:"None",category:"Bags",size:"One size",condition:"New with tags",listPrice:"9",poshUrl:"https://poshmark.com/listing/NWOT-Navy-White-Striped-Tote-Bag-Blank-for-Monogram-Preppy-Canvas-Beach-Bag-6a1ba4406d655d2464c4bacb",listDate:"2026-05-31"},
+  {name:"Tommy Hilfiger Mens XL Short Sleeve Floral Camo Button Down Shirt",brand:"Tommy Hilfiger",category:"Tops",size:"XL",condition:"Good",listPrice:"18",poshUrl:"https://poshmark.com/listing/Tommy-Hilfiger-Mens-XL-Custom-Fit-Short-Sleeve-Floral-Camo-Button-Down-Shirt-69f3be13a7e26010ea1258b7",listDate:"2026-04-30"},
+  {name:"Vintage Roffe Skiwear Blue Padded Bib Snow Pants — Womens Size 12",brand:"Roffe",category:"Bottoms",size:"12",condition:"Good",listPrice:"38",poshUrl:"https://poshmark.com/listing/Vintage-Roffe-Skiwear-Blue-Padded-Bib-Snow-Pants-Womens-12-Regular-6a113a9d8b24d3d37b607f08",listDate:"2026-05-23"},
+  {name:"DOKOTOO Womens White V-Neck Twisted Front Mesh Sleeve Top — Size L",brand:"Dokotoo",category:"Tops",size:"L",condition:"Good",listPrice:"26",poshUrl:"https://poshmark.com/listing/DOKOTOO-Womens-White-V-Neck-Twisted-Front-Mesh-Sleeve-Top-Blouse-Shirt-L-69ff20dc34d1563a7317dc8f",listDate:"2026-05-09"},
+  {name:"Chubbies Mens Domingos Are For Flamingos 7in Swim Trunks 2-in-1 Liner 3XL NEW",brand:"Chubbies",category:"Bottoms",size:"3XL",condition:"New with tags",listPrice:"36",poshUrl:"https://poshmark.com/listing/Chubbies-Mens-The-Domingos-Are-For-Flamingos-7-Swim-Trunks-2in1-Liner-3XL-NEW-6a323710bbfbea944d063c08",listDate:"2026-06-17"},
   {name:"Hybrid and Company Mens Pants",brand:"Hybrid and Company",category:"Bottoms",size:"One size",condition:"Good",listPrice:"12",poshUrl:"https://poshmark.com/closet/coxcreativeco"},
   {name:"Dokotoo Womens Top",brand:"Dokotoo",category:"Tops",size:"M",condition:"Good",listPrice:"14",poshUrl:"https://poshmark.com/closet/coxcreativeco"},
   {name:"American Eagle Outfitters Womens Top",brand:"American Eagle Outfitters",category:"Tops",size:"M",condition:"Good",listPrice:"16",poshUrl:"https://poshmark.com/closet/coxcreativeco"},
@@ -242,14 +268,55 @@ let tempPhoto=null;
 let WEB_APP_URL='';
 let isSyncing=false;
 
-function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
+
+function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 function fmt(n){return '$'+parseFloat(n||0).toFixed(2);}
 function calcProfit(i){return parseFloat(i.soldPrice||0)+parseFloat(i.shippingCharged||0)-parseFloat(i.purchasePrice||0)-parseFloat(i.platformFees||0)-parseFloat(i.shippingCost||0);}
-function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 function getPhotos(){try{return JSON.parse(localStorage.getItem('ccc_photos')||'{}');}catch{return{};}}
 function savePhoto(id,data){const p=getPhotos();if(data)p[id]=data;else delete p[id];try{localStorage.setItem('ccc_photos',JSON.stringify(p));}catch{}}
 function getPhoto(id){return getPhotos()[id]||null;}
 
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
+
+function todayStr(){
+  const d=new Date();
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+
+function daysListed(item){
+  if(item.status==='sold') return null;
+  if(!item.dateListed) return null;
+  const ms = Date.now() - new Date(item.dateListed).getTime();
+  return Math.floor(ms/(1000*60*60*24));
+}
+
+function agingStyle(days){
+  if(days===null || days<60) return '';
+  if(days>=90){
+    return 'background:rgba(160,30,10,0.22);border-color:rgba(160,30,10,0.5);';
+  }
+  // 60-89: interpolate yellow(rgba 210,160,0) -> red(rgba 160,30,10)
+  const t=(days-60)/30; // 0 at day60, 1 at day90
+  const r=Math.round(210+t*(160-210));
+  const g=Math.round(160+t*(30-160));
+  const b=Math.round(0+t*(10-0));
+  const a=0.10+t*0.12;
+  const ba=0.25+t*0.35;
+  return `background:rgba(${r},${g},${b},${a.toFixed(2)});border-color:rgba(${r},${g},${b},${ba.toFixed(2)});`;
+}
+
+function agingBadge(days){
+  if(days===null) return '';
+  if(days<60) return ` <span style="font-size:11px;color:var(--gray-400);margin-left:4px">${days}d</span>`;
+  const urgent = days>=90 ? ' ⚠️' : '';
+  const col = days>=85?'#7a1500':days>=75?'#8a3000':days>=65?'#7a5000':'#6a6000';
+  return ` <span style="font-size:11px;font-weight:700;color:${col};margin-left:4px">${days}d${urgent}</span>`;
+}
+
+
+
+
+// ── Sync status bar ───────────────────────────────────
 function setSyncStatus(type,msg){
   const bar=document.getElementById('sync-bar');
   if(!bar)return;
@@ -258,35 +325,18 @@ function setSyncStatus(type,msg){
   if(type==='ok'||type==='error')setTimeout(()=>{bar.className='sync-bar';},3500);
 }
 
-// ── Setup ─────────────────────────────────────────────
+// ── Setup screen ──────────────────────────────────────
 function showSetup(){
   document.getElementById('setup-root').innerHTML=`
   <div class="setup-screen">
     <div class="setup-logo">
-      <div class="setup-logo-icon" style="padding:0;overflow:hidden"><img src="data:image/jpeg;base64,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" style="width:72px;height:72px;object-fit:cover;display:block;border-radius:18px" alt="CoxCreativeCo logo"></div>
+      <div class="setup-logo-icon" style="padding:0;overflow:hidden"><img src="" style="width:72px;height:72px;object-fit:cover;display:block;border-radius:18px" alt="CoxCreativeCo logo"></div>
       <h1 style="font-size:22px;font-weight:700;margin-bottom:4px">CoxCreativeCo</h1>
       <p style="font-size:14px;color:var(--gray-400)">Inventory Tracker</p>
     </div>
-
     <div class="setup-card">
-      <h2>Step 1 — Create your Google Sheet</h2>
-      <p>Go to <strong>sheets.google.com</strong>, create a new blank spreadsheet, and name it <strong>CoxCreativeCo Inventory</strong>.</p>
-      <p>Click cell <strong>A1</strong> and paste this row of headers (copy the whole line — it fills all 21 columns automatically):</p>
-      <div class="code-block">id	sku	name	brand	status	category	size	condition	color	source	purchaseDate	purchasePrice	listPrice	notes	soldPrice	soldPlatform	soldDate	platformFees	shippingCharged	shippingCost	poshUrl</div>
-    </div>
-
-    <div class="setup-card">
-      <h2>Step 2 — Add the Apps Script</h2>
-      <div class="setup-step"><div class="step-num">1</div><div class="step-body">In your Sheet, click <strong>Extensions → Apps Script</strong></div></div>
-      <div class="setup-step"><div class="step-num">2</div><div class="step-body">Delete all existing code, paste in the <strong>apps-script.gs</strong> file, and click <strong>Save</strong></div></div>
-      <div class="setup-step"><div class="step-num">3</div><div class="step-body">Click <strong>Deploy → New deployment</strong> · Type: <strong>Web app</strong> · Execute as: <strong>Me</strong> · Access: <strong>Anyone</strong> · click <strong>Deploy</strong></div></div>
-      <div class="setup-step"><div class="step-num">4</div><div class="step-body">Authorize when prompted: <strong>Advanced → Go to CoxCreativeCo Inventory (unsafe) → Allow</strong></div></div>
-      <div class="setup-step"><div class="step-num">5</div><div class="step-body">Copy the <strong>Web app URL</strong> and paste it below</div></div>
-    </div>
-
-    <div class="setup-card">
-      <h2>Step 3 — Connect</h2>
-      <p>Paste your Web App URL here. It starts with <span style="font-family:monospace;font-size:12px">https://script.google.com/macros/s/…</span></p>
+      <h2>Connect your Google Sheet</h2>
+      <p>Paste your Apps Script Web App URL below to get started.</p>
       <input class="url-input" id="setup-url" placeholder="https://script.google.com/macros/s/…/exec">
       <button class="btn-primary" style="margin-top:12px" onclick="saveAndConnect()">Connect to Google Sheet →</button>
     </div>
@@ -295,10 +345,7 @@ function showSetup(){
 
 function saveAndConnect(){
   const url=document.getElementById('setup-url').value.trim();
-  if(!url.startsWith('https://script.google.com')){
-    alert('That doesn\'t look right. The URL should start with https://script.google.com');
-    return;
-  }
+  if(!url.startsWith('https://script.google.com')){alert('That doesn\'t look right. The URL should start with https://script.google.com');return;}
   WEB_APP_URL=url;
   localStorage.setItem('ccc_web_app_url',url);
   document.getElementById('setup-root').innerHTML='';
@@ -306,19 +353,15 @@ function saveAndConnect(){
   loadFromSheet();
 }
 
-// ── Sheet sync ────────────────────────────────────────
+// ── Google Sheet sync ─────────────────────────────────
 async function callSheet(payload){
   const url=WEB_APP_URL+'?payload='+encodeURIComponent(JSON.stringify(payload));
-  const res=await fetch(url,{
-    method:'GET',
-    redirect:'follow',
-    cache:'no-cache',
-  });
+  const res=await fetch(url,{method:'GET',redirect:'follow',cache:'no-cache'});
   if(!res.ok)throw new Error('HTTP '+res.status);
   const text=await res.text();
   let json;
-  try{json=JSON.parse(text);}catch(e){throw new Error('Bad response from sheet: '+text.slice(0,100));}
-  if(!json.ok)throw new Error(json.error||'Sheet returned an error');
+  try{json=JSON.parse(text);}catch(e){throw new Error('Bad response: '+text.slice(0,100));}
+  if(!json.ok)throw new Error(json.error||'Sheet error');
   return json;
 }
 
@@ -327,10 +370,9 @@ async function loadFromSheet(){
   try{
     const res=await callSheet({action:'getAll'});
     const sheetItems=res.items||[];
-    if(sheetItems.length===0 && !localStorage.getItem('ccc_seeded')){
-      // First time — seed Poshmark inventory into sheet
+    if(sheetItems.length===0&&!localStorage.getItem('ccc_seeded')){
       await seedPoshmarkInventory();
-    } else {
+    }else{
       items=sheetItems;
       items.forEach(i=>{i.photo=getPhoto(i.id);});
       renderInventory();
@@ -339,17 +381,15 @@ async function loadFromSheet(){
     }
   }catch(e){
     setSyncStatus('error','⚠️ Could not reach Google Sheet — '+e.message);
-    try{
-      const c=localStorage.getItem('ccc_cache');
-      if(c){items=JSON.parse(c);items.forEach(i=>{i.photo=getPhoto(i.id);});renderInventory();updateHeaderCount();}
-    }catch{}
+    try{const c=localStorage.getItem('ccc_cache');if(c){items=JSON.parse(c);items.forEach(i=>{i.photo=getPhoto(i.id);});renderInventory();updateHeaderCount();}}catch{}
   }
 }
 
 async function seedPoshmarkInventory(){
   setSyncStatus('syncing','First launch — importing Poshmark listings (takes ~30 seconds)…');
+  const today=todayStr();
   const seeded=POSHMARK_SEED.map(s=>({
-    id:uid(),sku:'',status:'listed',
+    id:uid(),sku:'',status:'listed',dateListed:today,
     name:s.name,brand:s.brand||'',category:s.category||'',
     size:s.size||'',condition:s.condition||'',color:'',
     source:'Poshmark',purchaseDate:'',purchasePrice:'',
@@ -366,10 +406,10 @@ async function seedPoshmarkInventory(){
     items=seeded;
     items.forEach(i=>{i.photo=null;});
     localStorage.setItem('ccc_seeded','1');
-    localStorage.setItem('ccc_cache',JSON.stringify(seeded));
+    cacheItems();
     renderInventory();
     updateHeaderCount();
-    setSyncStatus('ok','✓ Imported '+seeded.length+' Poshmark listings — add purchase prices to unlock profit tracking');
+    setSyncStatus('ok','✓ Imported '+seeded.length+' Poshmark listings');
     const list=document.getElementById('inventory-list');
     if(list){
       const notice=document.createElement('div');
@@ -381,6 +421,7 @@ async function seedPoshmarkInventory(){
     setSyncStatus('error','⚠️ Could not seed inventory — '+e.message+'. Tap 🔄 to try again.');
   }
 }
+
 async function saveItemToSheet(item){
   const toSave={...item};delete toSave.photo;
   try{
@@ -469,13 +510,16 @@ function renderInventory(){
   el.innerHTML=list.map(i=>{
     const bc=i.status==='listed'?'badge-listed':'badge-draft';
     const bt=i.status==='listed'?'Listed':'Draft';
-    return`<div class="item-card" data-id="${i.id}" onclick="openEditModal(this.dataset.id)">
+    const days=daysListed(i);
+    const aging=agingStyle(days);
+    return`<div class="item-card" data-id="${i.id}" onclick="openEditModal(this.dataset.id)" style="${aging}">
       <div class="item-thumb">${i.photo?`<img src="${i.photo}" alt="">`:'👗'}</div>
       <div class="item-body"><div class="item-top">
         <div style="min-width:0">
           ${i.sku?`<div class="item-sku">${esc(i.sku)}</div>`:''}
           <div class="item-name">${esc(i.name)||'Unnamed item'}</div>
           <div class="item-meta">${[i.brand,i.category,i.size].filter(Boolean).map(esc).join(' · ')}</div>
+          <div class="item-meta">${agingBadge(days)}</div>
         </div>
         <div class="item-prices">
           <div class="item-list-price">${i.listPrice?fmt(i.listPrice):'—'}</div>
@@ -530,7 +574,77 @@ function renderDashboard(){
     ${bRows.length?`<div class="section-card"><div class="section-title">Top brands sold</div>${bRows.map(([b,d])=>`<div class="plat-row"><div><div class="plat-name">${esc(b)}</div><div class="plat-count">${d.count} sold</div></div><div class="plat-profit ${d.profit>=0?'profit-positive':'profit-negative'}">${fmt(d.profit)}</div></div>`).join('')}</div>`:''}`;
 }
 
-// ── Modals ─────────────────────────────────────────────
+// ── SearchableSelect ──────────────────────────────────
+class SearchableSelect {
+  constructor(containerId,listFn,listKey,initialValue,placeholder){
+    this.containerId=containerId;this.listFn=listFn;this.listKey=listKey;
+    this.value=initialValue||'';this.placeholder=placeholder||'Search or select…';
+    this.render();
+  }
+  getOptions(){return this.listFn();}
+  render(){
+    const wrap=document.getElementById(this.containerId);if(!wrap)return;
+    wrap.innerHTML=`<div class="sd-wrap" id="${this.containerId}-wrap">
+      <input class="sd-input" id="${this.containerId}-input" type="text"
+        placeholder="${this.placeholder}" value="${esc(this.value)}"
+        autocomplete="off" autocorrect="off" spellcheck="false" readonly
+        onclick="SD['${this.containerId}'].toggle()"
+        oninput="SD['${this.containerId}'].onInput(this.value)">
+      <div class="sd-list" id="${this.containerId}-list"></div>
+    </div>`;
+    this.renderList('');
+    document.addEventListener('click',this._outsideClick=(e)=>{
+      if(!document.getElementById(this.containerId+'-wrap')?.contains(e.target))this.close();
+    });
+  }
+  renderList(q){
+    const list=document.getElementById(this.containerId+'-list');if(!list)return;
+    const opts=this.getOptions().filter(o=>!q||o.toLowerCase().includes(q.toLowerCase()));
+    let h=opts.length
+      ?opts.map((o,i)=>`<div class="sd-item" data-val="${esc(o)}" onclick="SD['${this.containerId}'].select('${esc(o)}')">${esc(o)}</div>`).join('')
+      :'<div class="sd-empty">No matches</div>';
+    h+=`<div class="sd-item add-new" onclick="SD['${this.containerId}'].addNew()">+ Add new…</div>`;
+    list.innerHTML=h;
+  }
+  onInput(q){const inp=document.getElementById(this.containerId+'-input');if(inp)inp.readOnly=false;this.open();this.renderList(q);}
+  toggle(){
+    const list=document.getElementById(this.containerId+'-list');if(!list)return;
+    if(list.classList.contains('open')){this.close();return;}
+    const inp=document.getElementById(this.containerId+'-input');
+    if(inp){inp.readOnly=false;inp.select();}
+    this.renderList('');list.classList.add('open');
+  }
+  open(){const list=document.getElementById(this.containerId+'-list');if(list)list.classList.add('open');}
+  close(){
+    const list=document.getElementById(this.containerId+'-list');if(list)list.classList.remove('open');
+    const inp=document.getElementById(this.containerId+'-input');if(inp){inp.value=this.value;inp.readOnly=true;}
+  }
+  select(val){
+    this.value=val;
+    const inp=document.getElementById(this.containerId+'-input');if(inp){inp.value=val;inp.readOnly=true;}
+    this.close();
+  }
+  addNew(){
+    const label=this.listKey==='sources'?'Enter new source location:':'Enter new option:';
+    const val=prompt(label);if(!val||!val.trim())return;
+    const trimmed=val.trim();const list=this.getOptions();
+    if(!list.includes(trimmed)){list.push(trimmed);saveList(this.listKey,list);}
+    this.select(trimmed);
+  }
+  destroy(){document.removeEventListener('click',this._outsideClick);}
+}
+
+const SD={};
+function initSearchableSelects(item){
+  Object.values(SD).forEach(s=>s.destroy&&s.destroy());
+  Object.keys(SD).forEach(k=>delete SD[k]);
+  SD['f-cat']   =new SearchableSelect('f-cat-wrap',   CATEGORIES,'categories',item.category||'', 'Search category…');
+  SD['f-size']  =new SearchableSelect('f-size-wrap',  SIZES,     'sizes',     item.size||'',     'Search size…');
+  SD['f-cond']  =new SearchableSelect('f-cond-wrap',  CONDITIONS,'conditions',item.condition||'','Search condition…');
+  SD['f-source']=new SearchableSelect('f-source-wrap',SOURCES,   'sources',   item.source||'',   'Search location…');
+  SD['f-brand'] =new SearchableSelect('f-brand-wrap', BRANDS,    'brands',    item.brand||'',    'Search or type brand…');
+}
+
 // ── Editable dropdown helpers ─────────────────────────
 function handleSelectChange(selectEl, listKey, listFn) {
   if (selectEl.value !== '__add__') return;
@@ -604,26 +718,28 @@ function showItemModal(item,isEdit){
           </select></div>
         </div>
         <div class="field"><label>Item name</label><input id="f-name" value="${esc(item.name||'')}" placeholder="e.g. Vintage Levi's 501 jeans"></div>
-        <div class="field"><label>Brand</label><input id="f-brand" value="${esc(item.brand||'')}" placeholder="e.g. Free People, Levi's"></div>
+        <div class="field"><label>Brand</label><div id="f-brand-wrap"></div></div>
         <div class="field-row3">
-          <div class="field"><label>Category</label><select id="f-cat" onchange="if(this.value==='__add__'){handleSelectChange(this,'categories',CATEGORIES)}"><option value="">—</option>${CATEGORIES().map(c=>`<option ${item.category===c?'selected':''}>${c}</option>`).join('')}<option value='__add__'>+ Add new…</option></select></div>
-          <div class="field"><label>Size</label><select id="f-size" onchange="if(this.value==='__add__'){handleSelectChange(this,'sizes',SIZES)}"><option value="">—</option>${SIZES().map(s=>`<option ${item.size===s?'selected':''}>${s}</option>`).join('')}<option value='__add__'>+ Add new…</option></select></div>
-          <div class="field"><label>Condition</label><select id="f-cond" onchange="if(this.value==='__add__'){handleSelectChange(this,'conditions',CONDITIONS)}"><option value="">—</option>${CONDITIONS().map(c=>`<option ${item.condition===c?'selected':''}>${c}</option>`).join('')}<option value='__add__'>+ Add new…</option></select></div>
+          <div class="field"><label>Category</label><div id="f-cat-wrap"></div></div>
+          <div class="field"><label>Size</label><div id="f-size-wrap"></div></div>
+          <div class="field"><label>Condition</label><div id="f-cond-wrap"></div></div>
         </div>
         <div class="field"><label>Color / description</label><input id="f-color" value="${esc(item.color||'')}" placeholder="e.g. Navy blue, floral print"></div>
         <div class="field"><label>Notes</label><textarea id="f-notes" placeholder="Measurements, flaws, storage location…">${esc(item.notes||'')}</textarea></div>
+        <div class="field"><label>Date listed <span style="font-size:11px;color:var(--gray-400);font-weight:400">(auto-set when status = Listed)</span></label>
+          <input type="date" id="f-date-listed" value="${esc(item.dateListed||'')}" placeholder="Auto-stamped">
+        </div>
         ${item.poshUrl?`<a href="${esc(item.poshUrl)}" style="font-size:12px;color:var(--green-text);text-decoration:none;display:inline-block;margin-top:4px" target="_blank">🔗 View on Poshmark</a>`:''}
       </div>
       <div class="modal-section">
         <div class="modal-section-title">💰 Purchase info</div>
         <div class="field-row">
-          <div class="field"><label>Where purchased</label><select id="f-source" onchange="handleSourceChange(this)">
-            <option value="">Select…</option>
-            ${SOURCES().map(s=>`<option ${item.source===s?'selected':''}>${s}</option>`).join('')}
-            ${item.source && !SOURCES().includes(item.source) ? `<option selected>${esc(item.source)}</option>` : ''}
-            <option value="__add__">+ Add new…</option>
-          </select></div>
+          <div class="field"><label>Where purchased</label><div id="f-source-wrap"></div></div>
           <div class="field"><label>Date purchased</label><input type="date" id="f-date" value="${esc(item.purchaseDate||'')}"></div>
+        </div>
+        <div class="field-row">
+          <div class="field"><label>Date listed</label><input type="date" id="f-listdate" value="${esc(item.listDate||'')}"><div style="font-size:11px;color:var(--gray-400);margin-top:3px">Used to track aging — auto-filled from Poshmark for existing items</div></div>
+          <div class="field"><label>Days listed</label><div style="padding:11px 0;font-size:15px;font-weight:600;color:${daysListed(item)>=90?'#7a1a1a':daysListed(item)>=60?'#7a4a00':'var(--gray-600)'}">${daysListed(item)!==null?daysListed(item)+' days':'—'}</div></div>
         </div>
         <div class="field-row">
           <div class="field"><label>Purchase price</label><input type="number" step="0.01" id="f-cost" value="${esc(item.purchasePrice||'')}" placeholder="0.00"></div>
@@ -638,6 +754,7 @@ function showItemModal(item,isEdit){
       <div style="height:8px"></div>
     </div>
   </div></div>`;
+  initSearchableSelects(item);
 }
 
 function handlePhoto(input){
@@ -661,29 +778,53 @@ function handlePhoto(input){
 function removePhoto(){tempPhoto=null;document.getElementById('photo-wrap').innerHTML=photoHTML();}
 
 async function saveItem(existingId){
+  const newStatus=document.getElementById('f-status').value;
+  const existingItem=existingId?items.find(i=>i.id===existingId):null;
+  const wasListed=existingItem?.status==='listed';
   const item={
     id:existingId||uid(),
     sku:document.getElementById('f-sku').value.trim(),
     name:document.getElementById('f-name').value.trim(),
-    brand:document.getElementById('f-brand').value.trim(),
-    status:document.getElementById('f-status').value,
-    category:document.getElementById('f-cat').value,
-    size:document.getElementById('f-size').value,
-    condition:document.getElementById('f-cond').value,
+    brand:SD['f-brand']?.value||'',
+    status:newStatus,
+    category:SD['f-cat']?.value||'',
+    size:SD['f-size']?.value||'',
+    condition:SD['f-cond']?.value||'',
     color:document.getElementById('f-color').value.trim(),
-    source:document.getElementById('f-source').value.trim(),
+    source:SD['f-source']?.value||'',
     purchaseDate:document.getElementById('f-date').value,
     purchasePrice:document.getElementById('f-cost').value,
     listPrice:document.getElementById('f-list').value,
     notes:document.getElementById('f-notes').value.trim(),
+    listDate:document.getElementById('f-listdate')?.value||'',
     photo:tempPhoto,
   };
+  // dateListed: use manual override if provided, else auto-stamp
+  const manualDateListed=document.getElementById('f-date-listed')?.value||'';
+  if(newStatus==='listed'){
+    if(manualDateListed){
+      item.dateListed=manualDateListed;
+    } else if(!existingItem){
+      item.dateListed=todayStr();
+    } else if(!wasListed){
+      item.dateListed=todayStr();
+    } else {
+      item.dateListed=existingItem.dateListed||todayStr();
+    }
+  } else {
+    item.dateListed=manualDateListed||existingItem?.dateListed||'';
+  }
   if(existingId){
     const idx=items.findIndex(i=>i.id===existingId);
     const old=items[idx];
     Object.assign(item,{soldPrice:old.soldPrice,soldPlatform:old.soldPlatform,soldDate:old.soldDate,platformFees:old.platformFees,shippingCharged:old.shippingCharged,shippingCost:old.shippingCost,poshUrl:old.poshUrl||''});
     items[idx]=item;
   }else{items.unshift(item);}
+  // Auto-add brand to brands list if it's new
+  if(item.brand){
+    const bl=BRANDS();
+    if(!bl.includes(item.brand)){bl.push(item.brand);bl.sort();saveList('brands',bl);}
+  }
   savePhoto(item.id,tempPhoto);
   closeModal();
   renderInventory();
@@ -799,6 +940,7 @@ function openSettings(){
       </div>
       <div class="modal-section" style="margin-top:4px">
         <div class="modal-section-title">Manage dropdown lists</div>
+        ${listHTML('Brands','brands',BRANDS)}
         ${listHTML('Categories','categories',CATEGORIES)}
         ${listHTML('Sizes','sizes',SIZES)}
         ${listHTML('Conditions','conditions',CONDITIONS)}
@@ -810,10 +952,11 @@ function openSettings(){
 }
 
 // Expose list functions for settings buttons
+const listFn_brands     = BRANDS;
 const listFn_categories = CATEGORIES;
-const listFn_sizes = SIZES;
+const listFn_sizes      = SIZES;
 const listFn_conditions = CONDITIONS;
-const listFn_sources = SOURCES;
+const listFn_sources    = SOURCES;
 
 function removeListItem(key, idx, listFn) {
   const list = listFn();
